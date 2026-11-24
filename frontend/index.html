@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TP de autenticación</title>
+</head>
+<body>
+  <main>
+    <h1>TP de autenticación</h1>
+
+    <form id="login">
+      <label>Usuario <input name="nombre" autocomplete="username" required></label>
+      <label>Clave <input name="clave" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Iniciar sesión</button>
+    </form>
+
+    <h2>Probar rutas</h2>
+    <button type="button" data-ruta="publica">Ruta pública</button>
+    <button type="button" data-ruta="privada">Ruta privada</button>
+    <button type="button" data-ruta="admin">Ruta de administrador</button>
+
+    <p id="resultado" role="status"></p>
+  </main>
+
+  <script>
+    const formulario = document.querySelector('#login');
+    const resultado = document.querySelector('#resultado');
+
+    async function consultar(ruta, opciones) {
+      try {
+        const respuesta = await fetch(`/api/${ruta}`, opciones);
+        const datos = await respuesta.json();
+        const usuario = datos.usuario
+          ? ` (${datos.usuario.nombre}, rol: ${datos.usuario.rol})`
+          : '';
+
+        resultado.textContent = `${respuesta.status} · ${datos.mensaje}${usuario}`;
+      } catch {
+        resultado.textContent = 'No se pudo completar la solicitud.';
+      }
+    }
+
+    formulario.addEventListener('submit', (evento) => {
+      evento.preventDefault();
+      const credenciales = Object.fromEntries(new FormData(formulario));
+
+      consultar('login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credenciales)
+      });
+    });
+
+    document.querySelectorAll('[data-ruta]').forEach((boton) => {
+      boton.addEventListener('click', () => consultar(boton.dataset.ruta));
+    });
+  </script>
+</body>
+</html>
